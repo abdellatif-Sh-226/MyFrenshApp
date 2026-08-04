@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
+import '../providers/friends_provider.dart';
 import '../providers/progress_provider.dart';
 import '../providers/theme_provider.dart';
 
@@ -157,6 +158,7 @@ class SettingsScreen extends StatelessWidget {
             onPressed: () async {
               await auth.logout();
               if (!context.mounted) return;
+              context.read<FriendsProvider>().reset();
               Navigator.pop(ctx);
               Navigator.popUntil(context, (route) => route.isFirst);
             },

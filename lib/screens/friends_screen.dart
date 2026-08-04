@@ -17,7 +17,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final friends = context.read<FriendsProvider>();
-      if (friends.friends.isEmpty) friends.loadAll();
+      if (!friends.loading) friends.loadAll();
     });
   }
 

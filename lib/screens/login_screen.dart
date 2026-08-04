@@ -4,6 +4,7 @@ import '../core/constants/app_constants.dart';
 import '../core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
 import '../providers/content_provider.dart';
+import '../providers/friends_provider.dart';
 import '../providers/progress_provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -56,7 +57,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final progress = context.read<ProgressProvider>();
     final content = context.read<ContentProvider>();
-    await Future.wait([progress.loadProgress(), content.loadAll()]);
+    final friends = context.read<FriendsProvider>();
+    await Future.wait([
+      progress.loadProgress(),
+      content.loadAll(),
+      friends.loadAll(),
+    ]);
     if (!mounted) return;
     setState(() => _submitting = false);
   }

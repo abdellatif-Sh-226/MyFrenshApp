@@ -24,6 +24,10 @@ class FriendsProvider extends ChangeNotifier {
     if (!_api.isAuthenticated) return;
     _loading = true;
     _error = null;
+    _friends = [];
+    _incoming = [];
+    _sent = [];
+    _leaderboard = [];
     notifyListeners();
     try {
       await Future.wait([_loadFriends(), _loadRequests(), _loadLeaderboard()]);
@@ -74,5 +78,15 @@ class FriendsProvider extends ChangeNotifier {
   Future<void> declineRequest(int id) async {
     await _api.declineFriendRequest(id);
     await loadAll();
+  }
+
+  void reset() {
+    _friends = [];
+    _incoming = [];
+    _sent = [];
+    _leaderboard = [];
+    _error = null;
+    _loading = false;
+    notifyListeners();
   }
 }
