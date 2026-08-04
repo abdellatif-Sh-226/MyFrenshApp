@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import '../core/constants/app_constants.dart';
 import '../core/theme/app_theme.dart';
 import '../models/unit_model.dart';
+import '../providers/content_provider.dart';
 import '../providers/progress_provider.dart';
-import '../services/json_loader_service.dart';
 import '../widgets/unit_card.dart';
 import 'alphabet_screen.dart';
 import 'courses_screen.dart';
@@ -39,27 +39,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadUnits() async {
-    final progressProvider = context.read<ProgressProvider>();
-    final jsonLoader = JsonLoaderService();
-
-    final List<Unit> units = [];
-    for (int i = 1; i <= AppConstants.totalUnits; i++) {
-      final questions = await jsonLoader.loadUnitQuestions(i);
-      final unit = Unit(
-        unitNumber: i,
-        difficulty: AppConstants.unitDifficulties[i - 1],
-        questions: questions,
-      );
-      progressProvider.applyScoreToUnit(unit);
-      units.add(unit);
+    final contentProvider = context.read<ContentProvider>();
+    if (!contentProvider.loaded) {
+      await contentProvider.loadAll();
     }
-
-    if (mounted) {
-      setState(() {
-        _units = units;
-        _loading = false;
-      });
-    }
+    if (!mounted) return;
+    setState(() {
+      _units = contentProvider.units;
+      _loading = false;
+    });
   }
 
   @override
@@ -86,6 +74,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               );
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.group_outlined),
+            tooltip: 'Friends',
+            onPressed: () => Navigator.pushNamed(context, '/friends'),
           ),
           IconButton(
             icon: const Icon(Icons.settings),

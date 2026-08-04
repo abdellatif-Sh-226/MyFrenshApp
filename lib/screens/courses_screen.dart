@@ -1,19 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../core/theme/app_theme.dart';
-import '../data/courses_data.dart';
 import '../models/course_model.dart';
+import '../providers/content_provider.dart';
 import 'course_quiz_screen.dart';
 
-class CoursesScreen extends StatelessWidget {
+class CoursesScreen extends StatefulWidget {
   const CoursesScreen({super.key});
 
   @override
+  State<CoursesScreen> createState() => _CoursesScreenState();
+}
+
+class _CoursesScreenState extends State<CoursesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final content = context.read<ContentProvider>();
+      if (content.courses.isEmpty) content.loadAll();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final content = context.watch<ContentProvider>();
+    final courses = content.courses;
+
+    if (content.loading && courses.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: kCourses.length,
+      itemCount: courses.length,
       itemBuilder: (context, index) {
-        final course = kCourses[index];
+        final course = courses[index];
         return _CourseCard(
           course: course,
           onTap: () => _openCourse(context, course),

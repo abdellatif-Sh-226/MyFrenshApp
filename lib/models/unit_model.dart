@@ -20,6 +20,16 @@ class Unit {
     this.locked = false,
   });
 
+  factory Unit.fromJson(Map<String, dynamic> json) {
+    return Unit(
+      unitNumber: (json['unitNumber'] as num?)?.toInt() ?? 0,
+      difficulty: json['difficulty'] as String? ?? '',
+      questions: ((json['questions'] as List?) ?? const [])
+          .map((e) => Question.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
   int get totalQuestions => questions.length;
 
   String get progressStatus {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/theme/app_theme.dart';
+import '../providers/auth_provider.dart';
 import '../providers/progress_provider.dart';
 import '../providers/theme_provider.dart';
 
@@ -36,6 +37,49 @@ class SettingsScreen extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildSectionHeader(context, 'Account'),
+          const SizedBox(height: 8),
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Consumer<AuthProvider>(
+              builder: (context, auth, child) {
+                return Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.person_outline, color: AppTheme.primaryColor),
+                      title: Text(auth.isLoggedIn ? 'Signed in' : 'Not signed in'),
+                      subtitle: Text(
+                        auth.username ??
+                            (auth.isLoggedIn
+                                ? 'Offline mode - progress is local only'
+                                : 'Sign in to sync your progress'),
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      onTap: () {
+                        if (!auth.isLoggedIn) {
+                          Navigator.popUntil(context, (route) => route.isFirst);
+                        }
+                      },
+                    ),
+                    if (auth.isLoggedIn)
+                      ListTile(
+                        leading: const Icon(Icons.logout, color: AppTheme.wrongRed),
+                        title: const Text('Log out'),
+                        subtitle: const Text('Stop syncing with the server'),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        onTap: () => _showLogoutDialog(context, auth),
+                      ),
+                  ],
                 );
               },
             ),
@@ -93,6 +137,32 @@ class SettingsScreen extends StatelessWidget {
         style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
             ),
+      ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context, AuthProvider auth) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Log out?'),
+        content: const Text('You will no longer sync your progress with the server.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              await auth.logout();
+              if (!context.mounted) return;
+              Navigator.pop(ctx);
+              Navigator.popUntil(context, (route) => route.isFirst);
+            },
+            child: const Text('Log out', style: TextStyle(color: AppTheme.wrongRed)),
+          ),
+        ],
       ),
     );
   }

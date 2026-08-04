@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class AppConstants {
   AppConstants._();
 
@@ -17,6 +19,15 @@ class AppConstants {
   static const String mistakesKey = 'mistakes';
 
   static String unitFilePath(int unitNumber) => '$assetsPath/unit$unitNumber.json';
+
+  static String get apiBaseUrl {
+    const fromEnv = String.fromEnvironment('API_BASE_URL');
+    if (fromEnv.isNotEmpty) return fromEnv;
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:3000';
+    }
+    return 'http://localhost:3000';
+  }
 
   static const List<String> unitDifficulties = [
     'Beginner',

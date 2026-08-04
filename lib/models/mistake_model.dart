@@ -23,14 +23,24 @@ class Mistake {
     };
   }
 
+  Map<String, dynamic> toApiJson() {
+    return {
+      'word': word,
+      'meaning': meaning,
+      'wrongAnswer': wrongAnswer,
+      'unitNumber': unitNumber,
+    };
+  }
+
   factory Mistake.fromJson(Map<String, dynamic> json) {
     return Mistake(
-      word: json['word'] as String,
+      word: json['word'] as String? ?? '',
       meaning: json['meaning'] as String? ?? '',
-      wrongAnswer: json['wrong'] as String,
-      unitNumber: json['unit'] as int? ?? 0,
-      timestamp:
-          DateTime.tryParse(json['ts'] as String? ?? '') ?? DateTime.now(),
+      wrongAnswer: (json['wrongAnswer'] ?? json['wrong'] ?? '') as String,
+      unitNumber: (json['unitNumber'] ?? json['unit'] ?? 0) as int,
+      timestamp: DateTime.tryParse(
+              (json['timestamp'] ?? json['ts'] ?? '') as String) ??
+          DateTime.now(),
     );
   }
 }

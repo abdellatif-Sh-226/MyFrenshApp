@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String
+  isAdmin      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  progress     Progress[]
+  mistakes     Mistake[]
+  sentRequests     FriendRequest[] @relation("SentRequests")
+  receivedRequests FriendRequest[] @relation("ReceivedRequests")
+  friendshipsA    Friendship[] @relation("FriendA")
+  friendshipsB    Friendship[] @relation("FriendB")
+}
+
+model Unit {
+  id         Int    @id @default(autoincrement())
+  unitNumber Int    @unique
+  difficulty String
+  questions  Json
+}
+
+model Story {
+  id        Int    @id @default(autoincrement())
+  title     String
+  content   String
+  questions Json
+}
+
+model Course {
+  id          Int    @id @default(autoincrement())
+  title       String
+  description String
+  iconKey     String
+  lessons     Json
+  questions   Json
+}
+
+model Progress {
+  id               Int @id @default(autoincrement())
+  userId           Int
+  unitNumber       Int
+  bestScore        Int @default(0)
+  writingBestScore Int @default(0)
+  user             User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, unitNumber])
+}
+
+model Mistake {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  word        String
+  meaning     String
+  wrongAnswer String
+  unitNumber  Int
+  timestamp   DateTime @default(now())
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model FriendRequest {
+  id        Int      @id @default(autoincrement())
+  fromId    Int
+  toId      Int
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+  from      User @relation("SentRequests", fields: [fromId], references: [id], onDelete: Cascade)
+  to        User @relation("ReceivedRequests", fields: [toId], references: [id], onDelete: Cascade)
+}
+
+model Friendship {
+  id      Int @id @default(autoincrement())
+  userAId Int
+  userBId Int
+  userA   User @relation("FriendA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB   User @relation("FriendB", fields: [userBId], references: [id], onDelete: Cascade)
+  @@unique([userAId, userBId])
+}
