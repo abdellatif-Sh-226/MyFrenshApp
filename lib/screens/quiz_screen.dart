@@ -13,7 +13,6 @@ import '../widgets/question_card.dart';
 import '../widgets/answer_button.dart';
 import '../widgets/progress_bar_widget.dart';
 import '../widgets/question_edit_dialog.dart';
-import 'lesson_screen.dart';
 import 'result_screen.dart';
 
 class QuizScreen extends StatefulWidget {
@@ -57,7 +56,7 @@ class _QuizScreenState extends State<QuizScreen> {
 
   Future<void> _configureTts() async {
     await _flutterTts.setLanguage('fr-FR');
-    await _flutterTts.setSpeechRate(1.0);
+    await _flutterTts.setSpeechRate(0.7);
     await _flutterTts.setPitch(1.0);
   }
 
@@ -125,11 +124,6 @@ class _QuizScreenState extends State<QuizScreen> {
                   onPressed: () => _adminEdit(quiz),
                 ),
               ],
-              IconButton(
-                icon: const Icon(Icons.school_outlined),
-                tooltip: 'Word lesson',
-                onPressed: () => _showLessonBottomSheet(quiz),
-              ),
             ],
           ),
           body: SafeArea(
@@ -190,79 +184,6 @@ class _QuizScreenState extends State<QuizScreen> {
                 ),
               ],
             ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showLessonBottomSheet(QuizProvider quiz) {
-    final question = quiz.currentQuestion;
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetContext) {
-        return Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      question.word,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.volume_up, color: AppTheme.primaryColor),
-                    tooltip: 'Listen',
-                    onPressed: () => _speakWord(question.word),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Arabic translation: ${question.arabicTranslation}',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppTheme.primaryColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                question.meaning,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Example: ${question.example}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => LessonScreen(unit: widget.unit),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.school_outlined),
-                  label: const Text('Study all unit words'),
-                ),
-              ),
-            ],
           ),
         );
       },

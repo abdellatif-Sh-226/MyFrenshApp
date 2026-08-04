@@ -38,7 +38,7 @@ class _CourseQuizScreenState extends State<CourseQuizScreen> {
 
   Future<void> _configureTts() async {
     await _flutterTts.setLanguage('fr-FR');
-    await _flutterTts.setSpeechRate(1.0);
+    await _flutterTts.setSpeechRate(0.7);
     await _flutterTts.setPitch(1.0);
   }
 
