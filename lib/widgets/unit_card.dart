@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/constants/app_constants.dart';
 import '../core/theme/app_theme.dart';
 import '../models/unit_model.dart';
+import 'star_row.dart';
 
 class UnitCard extends StatelessWidget {
   final Unit unit;
@@ -91,15 +92,21 @@ class UnitCard extends StatelessWidget {
                                   ),
                             )
                           else if (unit.bestScore > 0)
-                            Row(
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(Icons.star, size: 16, color: AppTheme.accentColor),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Best: ${unit.bestScore} / ${unit.totalQuestions}',
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                                _starRow(
+                                  context,
+                                  'Quiz',
+                                  unit.quizStars,
+                                  unit.bestScore,
+                                ),
+                                const SizedBox(height: 4),
+                                _starRow(
+                                  context,
+                                  'Writing',
+                                  unit.writingStars,
+                                  unit.writingBestScore,
                                 ),
                               ],
                             )
@@ -132,8 +139,8 @@ class UnitCard extends StatelessWidget {
                           if (!isLocked && onWrite != null)
                             Tooltip(
                               message: writeLocked
-                                  ? 'Score ${AppConstants.questionsPerUnit}/${AppConstants.questionsPerUnit} to unlock the writing test'
-                                  : 'Writing test',
+                                  ? 'Score ${AppConstants.writingTestUnlockScore}/${AppConstants.questionsPerUnit} to unlock the writing test'
+                                  : 'Practice writing',
                               child: IconButton(
                                 icon: Icon(
                                   writeLocked
@@ -195,6 +202,32 @@ class UnitCard extends StatelessWidget {
                 ),
               ),
       ),
+    );
+  }
+
+  Widget _starRow(BuildContext context, String label, int stars, int best) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Row(
+      children: [
+        SizedBox(
+          width: 62,
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: isDark ? Colors.white54 : Colors.grey.shade600,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ),
+        StarRow(stars: stars, size: 18),
+        const SizedBox(width: 8),
+        Text(
+          'Best: $best',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: isDark ? Colors.white54 : Colors.grey.shade600,
+              ),
+        ),
+      ],
     );
   }
 

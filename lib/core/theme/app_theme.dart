@@ -7,6 +7,9 @@ class AppTheme {
   static const Color accentColor = Color(0xFFFF8F00);
   static const Color correctGreen = Color(0xFF2E7D32);
   static const Color wrongRed = Color(0xFFC62828);
+  static const Color starBronze = Color(0xFFCD7F32);
+  static const Color starSilver = Color(0xFF9E9E9E);
+  static const Color starGold = Color(0xFFFFC107);
   static const Color backgroundLight = Color(0xFFF5F5F5);
   static const Color backgroundDark = Color(0xFF121212);
 

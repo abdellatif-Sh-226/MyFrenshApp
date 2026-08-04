@@ -41,6 +41,7 @@ class _LessonScreenState extends State<LessonScreen> {
           title: 'Unit ${widget.unit.unitNumber} · Writing Practice',
           questions: widget.unit.questions,
           mode: SpellingMode.practice,
+          unitNumber: widget.unit.unitNumber,
         ),
       ),
     );

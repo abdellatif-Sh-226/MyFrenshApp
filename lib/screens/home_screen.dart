@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_constants.dart';
+import '../core/theme/app_theme.dart';
 import '../models/unit_model.dart';
 import '../providers/progress_provider.dart';
 import '../services/json_loader_service.dart';
@@ -162,7 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       unit: unit,
                       onTap: () => _startQuiz(unit),
                       onStudy: () => _openLesson(unit),
-                      onWrite: () => _openWritingTest(unit),
+                      onWrite: () => _openWritingPractice(unit),
                       writeLocked: false,
                     );
                   },
@@ -210,6 +211,79 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
+    if (unit.bestScore >= AppConstants.writingTestUnlockScore) {
+      _showUnitChoice(unit);
+      return;
+    }
+
+    _pushQuiz(unit);
+  }
+
+  void _showUnitChoice(Unit unit) {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Unit ${unit.unitNumber}',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Choose a test',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  height: 52,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _pushQuiz(unit);
+                    },
+                    icon: const Icon(Icons.quiz_outlined),
+                    label: const Text('Normal Quiz'),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 52,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _openWritingTest(unit);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.accentColor,
+                    ),
+                    icon: const Icon(Icons.edit_note),
+                    label: const Text('Writing Test (harder)'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _pushQuiz(Unit unit) {
     Navigator.push(
       context,
       PageRouteBuilder(
@@ -241,7 +315,32 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _openWritingPractice(Unit unit) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SpellingScreen(
+          title: 'Unit ${unit.unitNumber} · Writing Practice',
+          questions: unit.questions,
+          mode: SpellingMode.practice,
+          unitNumber: unit.unitNumber,
+        ),
+      ),
+    );
+  }
+
   void _openWritingTest(Unit unit) {
+    if (unit.bestScore < AppConstants.writingTestUnlockScore) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Score ${AppConstants.writingTestUnlockScore}/${AppConstants.questionsPerUnit} in unit ${unit.unitNumber} to unlock the writing test.',
+          ),
+        ),
+      );
+      return;
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -249,6 +348,7 @@ class _HomeScreenState extends State<HomeScreen> {
           title: 'Unit ${unit.unitNumber} · Writing Test',
           questions: unit.questions,
           mode: SpellingMode.test,
+          unitNumber: unit.unitNumber,
         ),
       ),
     );

@@ -23,7 +23,7 @@ class ResultScreen extends StatelessWidget {
               children: [
                 const SizedBox(height: 20),
                 ResultAnimation(
-                  stars: result.stars,
+                  stars: Unit.starsForScore(result.score),
                   performance: result.performance,
                 ),
                 const SizedBox(height: 32),

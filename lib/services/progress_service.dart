@@ -35,6 +35,29 @@ class ProgressService {
     for (int i = 1; i <= AppConstants.totalUnits; i++) {
       final key = '${AppConstants.prefsKeyPrefix}$i';
       await _prefs?.remove(key);
+      final writingKey = '${AppConstants.writingScoreKeyPrefix}$i';
+      await _prefs?.remove(writingKey);
+    }
+  }
+
+  Future<int> getWritingBestScore(int unitNumber) async {
+    final key = '${AppConstants.writingScoreKeyPrefix}$unitNumber';
+    return _prefs?.getInt(key) ?? 0;
+  }
+
+  Future<Map<int, int>> getAllWritingScores() async {
+    final Map<int, int> scores = {};
+    for (int i = 1; i <= AppConstants.totalUnits; i++) {
+      scores[i] = await getWritingBestScore(i);
+    }
+    return scores;
+  }
+
+  Future<void> saveWritingBestScore(int unitNumber, int score) async {
+    final key = '${AppConstants.writingScoreKeyPrefix}$unitNumber';
+    final current = await getWritingBestScore(unitNumber);
+    if (score > current) {
+      await _prefs?.setInt(key, score);
     }
   }
 

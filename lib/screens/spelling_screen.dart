@@ -1,22 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:provider/provider.dart';
 import '../core/theme/app_theme.dart';
 import '../models/question_model.dart';
+import '../models/unit_model.dart';
+import '../providers/progress_provider.dart';
+import '../widgets/star_row.dart';
 
 enum SpellingMode { practice, test }
 
-enum _SpellingStatus { idle, correct, wrong, revealed }
+enum _SpellingStatus { idle, correct, wrong }
 
 class SpellingScreen extends StatefulWidget {
   final String title;
   final List<Question> questions;
   final SpellingMode mode;
+  final int unitNumber;
 
   const SpellingScreen({
     super.key,
     required this.title,
     required this.questions,
     required this.mode,
+    required this.unitNumber,
   });
 
   @override
@@ -24,21 +30,34 @@ class SpellingScreen extends StatefulWidget {
 }
 
 class _SpellingScreenState extends State<SpellingScreen> {
+  static const int _minRepetitions = 2;
+  static const int _maxRepetitions = 10;
+  static const int _defaultRepetitions = 3;
+
   final FlutterTts _flutterTts = FlutterTts();
   final TextEditingController _controller = TextEditingController();
 
   int _index = 0;
   int _score = 0;
+  int _consecutiveCorrect = 0;
+  int _repetitions = _defaultRepetitions;
+  bool _wasWrong = false;
   _SpellingStatus _status = _SpellingStatus.idle;
   bool _finished = false;
 
   Question get question => widget.questions[_index];
 
+  bool get _isPractice => widget.mode == SpellingMode.practice;
+
+  bool get _wordComplete {
+    if (_isPractice) return _consecutiveCorrect >= _repetitions;
+    return _status == _SpellingStatus.correct;
+  }
+
   @override
   void initState() {
     super.initState();
     _configureTts();
-    _speak();
   }
 
   Future<void> _configureTts() async {
@@ -64,31 +83,37 @@ class _SpellingScreenState extends State<SpellingScreen> {
   }
 
   void _check() {
-    if (_status == _SpellingStatus.correct || _status == _SpellingStatus.revealed) {
-      _next();
-      return;
-    }
     if (_controller.text.trim().isEmpty) return;
 
     final correct = _normalize(_controller.text) == _normalize(question.word);
     setState(() {
       if (correct) {
+        if (_isPractice) {
+          _consecutiveCorrect++;
+          _controller.clear();
+        } else {
+          if (!_wasWrong) _score++;
+        }
         _status = _SpellingStatus.correct;
-        if (widget.mode == SpellingMode.test) _score++;
       } else {
+        if (_isPractice) {
+          _consecutiveCorrect = 0;
+        } else {
+          _wasWrong = true;
+        }
         _status = _SpellingStatus.wrong;
       }
     });
   }
 
-  void _reveal() {
-    setState(() {
-      _status = _SpellingStatus.revealed;
-    });
-  }
-
-  void _next() {
+  Future<void> _next() async {
     if (_index >= widget.questions.length - 1) {
+      if (widget.mode == SpellingMode.test) {
+        await context
+            .read<ProgressProvider>()
+            .updateWritingScore(widget.unitNumber, _score);
+      }
+      if (!mounted) return;
       setState(() {
         _finished = true;
       });
@@ -97,9 +122,10 @@ class _SpellingScreenState extends State<SpellingScreen> {
     setState(() {
       _index++;
       _status = _SpellingStatus.idle;
+      _consecutiveCorrect = 0;
+      _wasWrong = false;
       _controller.clear();
     });
-    _speak();
   }
 
   void _restart() {
@@ -108,9 +134,17 @@ class _SpellingScreenState extends State<SpellingScreen> {
       _score = 0;
       _status = _SpellingStatus.idle;
       _finished = false;
+      _consecutiveCorrect = 0;
+      _wasWrong = false;
       _controller.clear();
     });
-    _speak();
+  }
+
+  void _changeRepetitions(int delta) {
+    setState(() {
+      _repetitions =
+          (_repetitions + delta).clamp(_minRepetitions, _maxRepetitions).toInt();
+    });
   }
 
   @override
@@ -132,19 +166,36 @@ class _SpellingScreenState extends State<SpellingScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Word ${_index + 1} / ${widget.questions.length}',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  if (!isPractice)
-                    Text(
-                      'Score: $_score',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.w600,
+                  Expanded(
+                    child: Text(
+                      'Word ${_index + 1} / ${widget.questions.length}',
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
                           ),
+                    ),
+                  ),
+                  if (isPractice)
+                    Flexible(
+                      child: Text(
+                        'Attempt: $_consecutiveCorrect/$_repetitions',
+                        textAlign: TextAlign.right,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: AppTheme.primaryColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    )
+                  else
+                    Flexible(
+                      child: Text(
+                        'Score: $_score',
+                        textAlign: TextAlign.right,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: AppTheme.primaryColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
                     ),
                 ],
               ),
@@ -165,6 +216,55 @@ class _SpellingScreenState extends State<SpellingScreen> {
                 ),
               ),
             ),
+            if (isPractice) ...[
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Repeat each word:',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey,
+                            ),
+                      ),
+                      const SizedBox(width: 4),
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints.tightFor(
+                            width: 40, height: 40),
+                        iconSize: 26,
+                        onPressed: _repetitions > _minRepetitions
+                            ? () => _changeRepetitions(-1)
+                            : null,
+                        icon: const Icon(Icons.remove_circle_outline),
+                        color: AppTheme.primaryColor,
+                      ),
+                      Text(
+                        '$_repetitions',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints.tightFor(
+                            width: 40, height: 40),
+                        iconSize: 26,
+                        onPressed: _repetitions < _maxRepetitions
+                            ? () => _changeRepetitions(1)
+                            : null,
+                        icon: const Icon(Icons.add_circle_outline),
+                        color: AppTheme.primaryColor,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
             Card(
               margin: const EdgeInsets.symmetric(horizontal: 24),
@@ -208,7 +308,8 @@ class _SpellingScreenState extends State<SpellingScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: TextField(
                 controller: _controller,
-                enabled: _status != _SpellingStatus.correct,
+                enabled: !(widget.mode == SpellingMode.test &&
+                    _status == _SpellingStatus.correct),
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 22),
                 textCapitalization: TextCapitalization.none,
@@ -224,44 +325,45 @@ class _SpellingScreenState extends State<SpellingScreen> {
                     borderSide: BorderSide.none,
                   ),
                 ),
-                onSubmitted: (_) => _check(),
+                onSubmitted: (_) => _wordComplete ? _next() : _check(),
               ),
             ),
             const SizedBox(height: 16),
             if (_status == _SpellingStatus.correct)
-              _feedbackChip(context, AppTheme.correctGreen, Icons.check_circle,
-                  'Correct !')
+              _feedbackChip(
+                context,
+                AppTheme.correctGreen,
+                Icons.check_circle,
+                widget.mode == SpellingMode.test && _wasWrong
+                    ? 'Correct ! (counts as wrong - first attempt was wrong)'
+                    : 'Correct !',
+              )
             else if (_status == _SpellingStatus.wrong)
               _feedbackChip(
                   context,
                   AppTheme.wrongRed,
                   Icons.cancel,
-                  'Incorrect. Correct answer: ${question.word}')
-            else if (_status == _SpellingStatus.revealed)
-              _feedbackChip(context, AppTheme.accentColor, Icons.lightbulb,
-                  'Answer: ${question.word}'),
+                  'Incorrect. Correct word: ${question.word}'),
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 children: [
-                  if (isPractice &&
-                      _status != _SpellingStatus.correct &&
-                      _status != _SpellingStatus.revealed) ...[
-                    OutlinedButton(
-                      onPressed: _reveal,
-                      child: const Text('Show answer'),
-                    ),
-                    const SizedBox(width: 12),
-                  ],
                   Expanded(
                     child: SizedBox(
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: _check,
+                        onPressed: _wordComplete ? _next : _check,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _wordComplete
+                              ? AppTheme.correctGreen
+                              : AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor:
+                              AppTheme.primaryColor.withValues(alpha: 0.4),
+                        ),
                         child: Text(
-                          _status == _SpellingStatus.correct ||
-                                  _status == _SpellingStatus.revealed
+                          _wordComplete
                               ? (_index >= widget.questions.length - 1
                                   ? 'Finish'
                                   : 'Next')
@@ -342,6 +444,8 @@ class _SpellingScreenState extends State<SpellingScreen> {
                     color: AppTheme.primaryColor,
                   ),
                 ),
+                const SizedBox(height: 8),
+                StarRow(stars: Unit.starsForScore(_score), size: 32),
                 const SizedBox(height: 8),
                 Text(
                   '${percentage.round()}%',

@@ -7,17 +7,20 @@ import '../services/progress_service.dart';
 class ProgressProvider extends ChangeNotifier {
   final ProgressService _progressService;
   Map<int, int> _scores = {};
+  Map<int, int> _writingScores = {};
   List<Mistake> _mistakes = [];
   bool _loaded = false;
 
   ProgressProvider(this._progressService);
 
   Map<int, int> get scores => _scores;
+  Map<int, int> get writingScores => _writingScores;
   List<Mistake> get mistakes => _mistakes;
   bool get loaded => _loaded;
 
   Future<void> loadProgress() async {
     _scores = await _progressService.getAllScores();
+    _writingScores = await _progressService.getAllWritingScores();
     _mistakes = await _progressService.getMistakes();
     _loaded = true;
     notifyListeners();
@@ -25,6 +28,10 @@ class ProgressProvider extends ChangeNotifier {
 
   int getBestScore(int unitNumber) {
     return _scores[unitNumber] ?? 0;
+  }
+
+  int getWritingBestScore(int unitNumber) {
+    return _writingScores[unitNumber] ?? 0;
   }
 
   bool canOpenUnit(int unitNumber) {
@@ -41,10 +48,20 @@ class ProgressProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> updateWritingScore(int unitNumber, int score) async {
+    await _progressService.saveWritingBestScore(unitNumber, score);
+    final current = _writingScores[unitNumber] ?? 0;
+    if (score > current) {
+      _writingScores[unitNumber] = score;
+      notifyListeners();
+    }
+  }
+
   Future<void> resetProgress() async {
     await _progressService.resetAllProgress();
     await _progressService.clearMistakes();
     _scores = {};
+    _writingScores = {};
     _mistakes = [];
     notifyListeners();
   }
@@ -64,6 +81,7 @@ class ProgressProvider extends ChangeNotifier {
   void applyScoreToUnit(Unit unit) {
     final score = _scores[unit.unitNumber] ?? 0;
     unit.bestScore = score;
+    unit.writingBestScore = _writingScores[unit.unitNumber] ?? 0;
     unit.completed = score >= AppConstants.passThreshold;
     unit.locked = !canOpenUnit(unit.unitNumber);
   }
