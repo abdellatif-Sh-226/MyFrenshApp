@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import bcrypt from 'bcryptjs';
 import { prisma } from './db.js';
 import { seedStories, seedCourses } from './data/seedContent.js';
@@ -40,8 +41,14 @@ async function seedAdmin() {
 async function seedUnits() {
   for (let i = 1; i <= UNIT_DEFS.length; i++) {
     const def = UNIT_DEFS[i - 1];
-    const url = new URL(`../../assets/data/${def.file}.json`, import.meta.url);
-    const questions = JSON.parse(readFileSync(url, 'utf8'));
+    const filePath = path.join(
+      process.cwd(),
+      '..',
+      'assets',
+      'data',
+      `${def.file}.json`,
+    );
+    const questions = JSON.parse(readFileSync(filePath, 'utf8'));
     const data = {
       title: def.title,
       category: def.category,

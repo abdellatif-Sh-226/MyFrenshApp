@@ -4,14 +4,16 @@ RUN apk add --no-cache openssl libc6-compat
 
 WORKDIR /app
 
-COPY backend/package*.json ./
-RUN npm install
+COPY backend/package*.json ./backend/
+RUN cd backend && npm install
 
-COPY backend/prisma ./prisma
-RUN npx prisma generate
+COPY backend/prisma ./backend/prisma
+RUN cd backend && npx prisma generate
 
-COPY backend/src ./src
+COPY backend/src ./backend/src
 COPY assets ./assets
+
+WORKDIR /app/backend
 
 EXPOSE 3000
 
