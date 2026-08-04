@@ -1,0 +1,17 @@
+node_modules
+**/node_modules
+.git
+.gitignore
+*.db
+*.db-journal
+.env
+backend/.env
+backend/test
+test
+build
+.dart_tool
+.idea
+.vscode
+*.log
+flutter.env
+.pub-cache

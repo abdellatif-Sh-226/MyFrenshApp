@@ -10,7 +10,6 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "seed": "node src/seed.js",
-    "pretest": "prisma db push && node src/seed.js",
     "test": "node test/prepare.mjs && node --test \"test/**/*.test.js\""
   },
   "dependencies": {
