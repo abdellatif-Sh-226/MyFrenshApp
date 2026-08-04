@@ -42,8 +42,14 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     final auth = context.read<AuthProvider>();
-    final String? error =
-        _isLogin ? await auth.login(username, password) : await auth.register(username, password);
+    String? error;
+    try {
+      error = _isLogin
+          ? await auth.login(username, password)
+          : await auth.register(username, password);
+    } catch (e) {
+      error = 'Unexpected error: $e';
+    }
 
     if (!mounted) return;
 

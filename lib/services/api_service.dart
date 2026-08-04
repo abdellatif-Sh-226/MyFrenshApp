@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,6 +25,8 @@ class ApiService {
   Map<String, dynamic>? _user;
   List<Unit>? _unitsCache;
   bool _initialized = false;
+
+  static const Duration _timeout = Duration(seconds: 10);
 
   http.Client get _http => _client ??= http.Client();
 
@@ -213,30 +216,28 @@ class ApiService {
     try {
       switch (method) {
         case 'GET':
-          res = await _http.get(uri, headers: headers);
+          res = await _http.get(uri, headers: headers).timeout(_timeout);
           break;
         case 'POST':
-          res = await _http.post(
-            uri,
-            headers: headers,
-            body: json.encode(body ?? {}),
-          );
+          res = await _http
+              .post(uri, headers: headers, body: json.encode(body ?? {}))
+              .timeout(_timeout);
           break;
         case 'PUT':
-          res = await _http.put(
-            uri,
-            headers: headers,
-            body: json.encode(body ?? {}),
-          );
+          res = await _http
+              .put(uri, headers: headers, body: json.encode(body ?? {}))
+              .timeout(_timeout);
           break;
         case 'DELETE':
-          res = await _http.delete(uri, headers: headers);
+          res = await _http.delete(uri, headers: headers).timeout(_timeout);
           break;
         default:
           throw ApiException('Unsupported method $method');
       }
     } on http.ClientException catch (e) {
-      throw ApiException('Cannot reach server: ${e.message}');
+      throw ApiException('Cannot reach server ($uri): ${e.message}');
+    } on TimeoutException {
+      throw ApiException('Cannot reach server ($uri): connection timed out');
     }
 
     if (res.statusCode < 200 || res.statusCode >= 300) {

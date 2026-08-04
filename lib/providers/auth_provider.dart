@@ -28,6 +28,8 @@ class AuthProvider extends ChangeNotifier {
       return null;
     } on ApiException catch (e) {
       return e.message;
+    } catch (e) {
+      return 'Unexpected error: $e';
     }
   }
 
@@ -39,6 +41,8 @@ class AuthProvider extends ChangeNotifier {
       return null;
     } on ApiException catch (e) {
       return e.message;
+    } catch (e) {
+      return 'Unexpected error: $e';
     }
   }
 
