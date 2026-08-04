@@ -77,7 +77,7 @@ class AppConstants {
     const fromEnv = String.fromEnvironment('API_BASE_URL');
     if (fromEnv.isNotEmpty) return fromEnv;
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://192.168.100.213:3000';
+      return 'http://192.168.100.226:3000';
     }
     return 'http://localhost:3000';
   }
