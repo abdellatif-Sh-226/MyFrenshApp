@@ -89,4 +89,21 @@ router.get('/me/score', async (req, res) => {
   res.json(computeUserScore(progress));
 });
 
+router.put('/me/photo', async (req, res) => {
+  const photo = req.body?.photo;
+  if (typeof photo !== 'string') {
+    return res.status(400).json({ error: 'photo (base64 string) is required' });
+  }
+  const user = await prisma.user.update({
+    where: { id: req.user.id },
+    data: { profilePhoto: photo || null },
+  });
+  res.json({ profilePhoto: user.profilePhoto });
+});
+
+router.delete('/me/photo', async (req, res) => {
+  await prisma.user.update({ where: { id: req.user.id }, data: { profilePhoto: null } });
+  res.json({ profilePhoto: null });
+});
+
 export default router;

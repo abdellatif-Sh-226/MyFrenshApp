@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { prisma } from '../db.js';
 
 export function requireAuth(req, res, next) {
   const header = req.headers.authorization || '';
@@ -8,6 +9,7 @@ export function requireAuth(req, res, next) {
   }
   try {
     req.user = jwt.verify(token, process.env.JWT_SECRET);
+    prisma.user.update({ where: { id: req.user.id }, data: { lastActiveAt: new Date() } }).catch(() => {});
     next();
   } catch {
     return res.status(401).json({ error: 'Invalid or expired token' });

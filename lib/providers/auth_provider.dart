@@ -12,6 +12,7 @@ class AuthProvider extends ChangeNotifier {
   String? get username => _api.username;
   Map<String, dynamic>? get user => _api.user;
   bool get isAdmin => _api.isAdmin;
+  String? get profilePhoto => _api.user?['profilePhoto'] as String?;
 
   Future<void> restoreSession() => _api.init();
 
@@ -50,5 +51,21 @@ class AuthProvider extends ChangeNotifier {
     _skipped = false;
     await _api.logout();
     notifyListeners();
+  }
+
+  Future<void> updatePhoto(String base64Photo) async {
+    final result = await _api.updatePhoto(base64Photo);
+    if (result != null && _api.user != null) {
+      _api.user!['profilePhoto'] = result['profilePhoto'];
+      notifyListeners();
+    }
+  }
+
+  Future<void> removePhoto() async {
+    await _api.removePhoto();
+    if (_api.user != null) {
+      _api.user!['profilePhoto'] = null;
+      notifyListeners();
+    }
   }
 }

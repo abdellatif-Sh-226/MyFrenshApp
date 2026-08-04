@@ -1,10 +1,14 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
 import '../providers/friends_provider.dart';
 import '../providers/progress_provider.dart';
 import '../providers/theme_provider.dart';
+import '../widgets/user_avatar.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -18,6 +22,12 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          Consumer<AuthProvider>(
+            builder: (context, auth, child) {
+              return _buildProfileSection(context, auth);
+            },
+          ),
+          const SizedBox(height: 24),
           _buildSectionHeader(context, 'Appearance'),
           const SizedBox(height: 8),
           Card(
@@ -162,6 +172,135 @@ class SettingsScreen extends StatelessWidget {
         style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
             ),
+      ),
+    );
+  }
+
+  Widget _buildProfileSection(BuildContext context, AuthProvider auth) {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            GestureDetector(
+              onTap: auth.isLoggedIn ? () => _changePhoto(context, auth) : null,
+              child: Stack(
+                children: [
+                  UserAvatar(
+                    base64Photo: auth.profilePhoto,
+                    username: auth.username ?? '?',
+                    size: 80,
+                    showOnlineIndicator: false,
+                  ),
+                  if (auth.isLoggedIn)
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Theme.of(context).scaffoldBackgroundColor,
+                            width: 2,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.camera_alt,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              auth.username ?? 'Guest',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            if (auth.profilePhoto != null && auth.isLoggedIn) ...[
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () => _removePhoto(context, auth),
+                icon: const Icon(Icons.delete_outline, size: 18),
+                label: const Text('Remove photo'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppTheme.wrongRed,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _changePhoto(BuildContext context, AuthProvider auth) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 80,
+    );
+    if (picked == null) return;
+
+    final bytes = await picked.readAsBytes();
+    final base64Str = base64Encode(bytes);
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Uploading photo...'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+
+    await auth.updatePhoto(base64Str);
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Photo updated'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _removePhoto(BuildContext context, AuthProvider auth) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Remove photo?'),
+        content: const Text('Your profile photo will be removed.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await auth.removePhoto();
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Photo removed'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            child: const Text('Remove', style: TextStyle(color: AppTheme.wrongRed)),
+          ),
+        ],
       ),
     );
   }

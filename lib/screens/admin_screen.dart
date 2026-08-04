@@ -9,6 +9,7 @@ import '../providers/content_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/question_edit_dialog.dart';
 import '../widgets/story_question_edit_dialog.dart';
+import '../widgets/user_avatar.dart';
 
 const List<String> _difficulties = [
   'Beginner',
@@ -349,17 +350,12 @@ class _UserRow extends StatelessWidget {
     final createdAt = (user['createdAt'] as String? ?? '').split('T').first;
 
     return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: isAdmin
-            ? AppTheme.accentColor.withValues(alpha: 0.2)
-            : AppTheme.primaryColor.withValues(alpha: 0.15),
-        child: Text(
-          username.isEmpty ? '?' : username[0].toUpperCase(),
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: isAdmin ? AppTheme.accentColor : AppTheme.primaryColor,
-          ),
-        ),
+      leading: UserAvatar(
+        base64Photo: user['profilePhoto'] as String?,
+        username: username,
+        isOnline: user['online'] == true,
+        size: 40,
+        showOnlineIndicator: true,
       ),
       title: Row(
         children: [

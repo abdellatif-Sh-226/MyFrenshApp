@@ -14,7 +14,7 @@ function sign(user) {
 }
 
 function publicUser(user) {
-  return { id: user.id, username: user.username, isAdmin: user.isAdmin };
+  return { id: user.id, username: user.username, isAdmin: user.isAdmin, profilePhoto: user.profilePhoto };
 }
 
 router.post('/register', async (req, res) => {

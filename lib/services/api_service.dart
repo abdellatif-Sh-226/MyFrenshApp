@@ -167,6 +167,15 @@ class ApiService {
     await _request('DELETE', '/api/me/progress');
   }
 
+  Future<Map<String, dynamic>?> updatePhoto(String base64Photo) async {
+    final data = await _request('PUT', '/api/me/photo', body: {'photo': base64Photo});
+    return data as Map<String, dynamic>?;
+  }
+
+  Future<void> removePhoto() async {
+    await _request('DELETE', '/api/me/photo');
+  }
+
   Future<List<Map<String, dynamic>>> fetchFriends() async {
     final data = await _request('GET', '/api/friends');
     return (data as List<dynamic>)

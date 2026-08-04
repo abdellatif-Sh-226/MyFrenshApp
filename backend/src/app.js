@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import { prisma } from './db.js';
 import authRoutes from './routes/auth.js';
 import contentRoutes from './routes/content.js';
 import adminRoutes from './routes/admin.js';
@@ -20,8 +21,9 @@ export function createApp() {
   app.use('/api', progressRoutes);
   app.use('/api/friends', friendsRoutes);
 
-  app.use('/api/me', requireAuth, (req, res) => {
-    res.json({ username: req.user.username, isAdmin: req.user.isAdmin });
+  app.use('/api/me', requireAuth, async (req, res) => {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    res.json({ username: user.username, isAdmin: user.isAdmin, profilePhoto: user.profilePhoto });
   });
 
   app.use((err, req, res, next) => {

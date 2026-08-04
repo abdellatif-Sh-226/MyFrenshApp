@@ -3,7 +3,22 @@ import { prisma } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { computeUserScore } from '../score.js';
 
+const ONLINE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 const router = Router();
+
+function isOnline(lastActiveAt) {
+  return new Date(lastActiveAt).getTime() > Date.now() - ONLINE_THRESHOLD_MS;
+}
+
+function publicUserFields(user) {
+  return {
+    id: user.id,
+    username: user.username,
+    profilePhoto: user.profilePhoto,
+    lastActiveAt: user.lastActiveAt,
+    online: isOnline(user.lastActiveAt),
+  };
+}
 router.use(requireAuth);
 
 router.post('/requests', async (req, res) => {
@@ -51,7 +66,7 @@ router.get('/requests', async (req, res) => {
     orderBy: { createdAt: 'desc' },
   });
   res.json({
-    incoming: incoming.map((r) => ({ id: r.id, from: r.from.username, createdAt: r.createdAt })),
+    incoming: incoming.map((r) => ({ id: r.id, from: r.from.username, fromProfilePhoto: r.from.profilePhoto, fromLastActiveAt: r.from.lastActiveAt, fromOnline: isOnline(r.from.lastActiveAt), createdAt: r.createdAt })),
     sent: sent.map((r) => ({ id: r.id, to: r.to.username, status: r.status })),
   });
 });
@@ -87,8 +102,7 @@ router.get('/', async (req, res) => {
     const other = f.userAId === req.user.id ? f.userB : f.userA;
     const progress = await prisma.progress.findMany({ where: { userId: other.id } });
     friends.push({
-      id: other.id,
-      username: other.username,
+      ...publicUserFields(other),
       score: computeUserScore(progress).total,
       joinedAt: other.createdAt,
     });
@@ -102,7 +116,10 @@ router.get('/leaderboard', async (req, res) => {
   const rows = [];
   for (const u of users) {
     const progress = await prisma.progress.findMany({ where: { userId: u.id } });
-    rows.push({ id: u.id, username: u.username, score: computeUserScore(progress).total });
+    rows.push({
+      ...publicUserFields(u),
+      score: computeUserScore(progress).total,
+    });
   }
   rows.sort((a, b) => b.score - a.score);
   res.json(rows);

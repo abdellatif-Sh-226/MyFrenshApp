@@ -120,6 +120,8 @@ router.get('/users', async (req, res) => {
         id: u.id,
         username: u.username,
         isAdmin: u.isAdmin,
+        profilePhoto: u.profilePhoto,
+        lastActiveAt: u.lastActiveAt,
         createdAt: u.createdAt,
         score: score.total,
         quizTotal: score.quizTotal,

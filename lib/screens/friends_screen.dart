@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
 import '../providers/friends_provider.dart';
+import '../widgets/user_avatar.dart';
 
 class FriendsScreen extends StatefulWidget {
   const FriendsScreen({super.key});
@@ -201,19 +202,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final score = (row['score'] as num?)?.toInt() ?? 0;
     final isTop = rank <= 3;
     return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: isTop
-            ? AppTheme.accentColor.withValues(alpha: 0.15)
-            : Theme.of(context).brightness == Brightness.dark
-                ? Colors.white12
-                : Colors.grey.shade200,
-        child: Text(
-          '$rank',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: isTop ? AppTheme.accentColor : Colors.grey,
-          ),
-        ),
+      leading: UserAvatar(
+        base64Photo: row['profilePhoto'] as String?,
+        username: row['username'] as String? ?? '?',
+        isOnline: row['online'] == true,
+        size: 40,
+        showOnlineIndicator: true,
       ),
       title: Text(
         row['username'] as String? ?? '?',
@@ -241,17 +235,32 @@ class _FriendsScreenState extends State<FriendsScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            const CircleAvatar(
-              backgroundColor: AppTheme.primaryColor,
-              child: Icon(Icons.person, color: Colors.white),
+            UserAvatar(
+              base64Photo: request['fromProfilePhoto'] as String?,
+              username: request['from'] as String? ?? '?',
+              isOnline: request['fromOnline'] == true,
+              size: 40,
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                request['from'] as String? ?? '?',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    request['from'] as String? ?? '?',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  if (request['fromOnline'] == true)
+                    Text(
+                      'Online',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.correctGreen,
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
+                ],
               ),
             ),
             IconButton(
@@ -272,18 +281,31 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   Widget _buildFriendCard(BuildContext context, Map<String, dynamic> friend) {
     final score = (friend['score'] as num?)?.toInt() ?? 0;
+    final isOnline = friend['online'] == true;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ListTile(
-        leading: const CircleAvatar(
-          backgroundColor: AppTheme.accentColor,
-          child: Icon(Icons.person, color: Colors.white),
+        leading: UserAvatar(
+          base64Photo: friend['profilePhoto'] as String?,
+          username: friend['username'] as String? ?? '?',
+          isOnline: isOnline,
+          size: 44,
         ),
         title: Text(
           friend['username'] as String? ?? '?',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
+        subtitle: isOnline
+            ? const Text(
+                'Online',
+                style: TextStyle(
+                  color: AppTheme.correctGreen,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              )
+            : null,
         trailing: Text(
           '$score pts',
           style: const TextStyle(
