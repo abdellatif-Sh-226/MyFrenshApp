@@ -101,6 +101,30 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
+          _buildSectionHeader(context, 'Admin'),
+          const SizedBox(height: 8),
+          Consumer<AuthProvider>(
+            builder: (context, auth, child) {
+              if (!auth.isAdmin) return const SizedBox.shrink();
+              return Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: ListTile(
+                  leading: const Icon(Icons.admin_panel_settings,
+                      color: AppTheme.accentColor),
+                  title: const Text('Admin Panel'),
+                  subtitle: const Text('Manage users, units, stories and courses'),
+                  trailing: const Icon(Icons.chevron_right),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  onTap: () => Navigator.pushNamed(context, '/admin'),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 24),
           _buildSectionHeader(context, 'About'),
           const SizedBox(height: 8),
           Card(

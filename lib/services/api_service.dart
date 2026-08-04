@@ -198,6 +198,128 @@ class ApiService {
         .toList();
   }
 
+  // ---------- Admin ----------
+
+  Future<List<Map<String, dynamic>>> fetchAdminUsers() async {
+    final data = await _request('GET', '/api/admin/users');
+    return (data as List<dynamic>)
+        .map((e) => e as Map<String, dynamic>)
+        .toList();
+  }
+
+  Future<void> adminDeleteUser(int id) async {
+    await _request('DELETE', '/api/admin/users/$id');
+  }
+
+  Future<void> adminCreateUnit(
+    int unitNumber,
+    String difficulty,
+    List<Map<String, dynamic>> questions,
+  ) async {
+    await _request(
+      'POST',
+      '/api/admin/units',
+      body: {'unitNumber': unitNumber, 'difficulty': difficulty, 'questions': questions},
+    );
+  }
+
+  Future<void> adminUpdateUnit(
+    int unitNumber, {
+    String? difficulty,
+    List<Map<String, dynamic>>? questions,
+  }) async {
+    await _request(
+      'PUT',
+      '/api/admin/units/$unitNumber',
+      body: {
+        'difficulty': ?difficulty,
+        'questions': ?questions,
+      },
+    );
+  }
+
+  Future<void> adminDeleteUnit(int unitNumber) async {
+    await _request('DELETE', '/api/admin/units/$unitNumber');
+  }
+
+  Future<Map<String, dynamic>> adminCreateStory({
+    required String title,
+    required String content,
+    required List<Map<String, dynamic>> questions,
+  }) async {
+    return (await _request(
+      'POST',
+      '/api/admin/stories',
+      body: {'title': title, 'content': content, 'questions': questions},
+    )) as Map<String, dynamic>;
+  }
+
+  Future<void> adminUpdateStory(
+    int id, {
+    String? title,
+    String? content,
+    List<Map<String, dynamic>>? questions,
+  }) async {
+    await _request(
+      'PUT',
+      '/api/admin/stories/$id',
+      body: {
+        'title': ?title,
+        'content': ?content,
+        'questions': ?questions,
+      },
+    );
+  }
+
+  Future<void> adminDeleteStory(int id) async {
+    await _request('DELETE', '/api/admin/stories/$id');
+  }
+
+  Future<Map<String, dynamic>> adminCreateCourse({
+    required String title,
+    String description = '',
+    String iconKey = 'school',
+    required List<Map<String, dynamic>> lessons,
+    required List<Map<String, dynamic>> questions,
+  }) async {
+    return (await _request(
+      'POST',
+      '/api/admin/courses',
+      body: {
+        'title': title,
+        'description': description,
+        'iconKey': iconKey,
+        'lessons': lessons,
+        'questions': questions,
+      },
+    )) as Map<String, dynamic>;
+  }
+
+  Future<void> adminUpdateCourse(
+    int id, {
+    String? title,
+    String? description,
+    String? iconKey,
+    List<Map<String, dynamic>>? lessons,
+    List<Map<String, dynamic>>? questions,
+  }) async {
+    await _request(
+      'PUT',
+      '/api/admin/courses/$id',
+      body: {
+        'title': ?title,
+        'description': ?description,
+        'iconKey': ?iconKey,
+        'lessons': ?lessons,
+        'questions': ?questions,
+      },
+    );
+  }
+
+  Future<void> adminDeleteCourse(int id) async {
+    await _request('DELETE', '/api/admin/courses/$id');
+  }
+
   Future<dynamic> _request(
     String method,
     String path, {

@@ -20,6 +20,7 @@ router.get('/stories', async (req, res) => {
   const stories = await prisma.story.findMany({ orderBy: { id: 'asc' } });
   res.json(
     stories.map((s) => ({
+      id: s.id,
       title: s.title,
       content: s.content,
       questions: s.questions,
@@ -31,6 +32,7 @@ router.get('/courses', async (req, res) => {
   const courses = await prisma.course.findMany({ orderBy: { id: 'asc' } });
   res.json(
     courses.map((c) => ({
+      id: c.id,
       title: c.title,
       description: c.description,
       iconKey: c.iconKey,

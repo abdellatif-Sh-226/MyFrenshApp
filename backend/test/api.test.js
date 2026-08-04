@@ -1,3 +1,4 @@
+import './setup.mjs';
 import { test, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import bcrypt from 'bcryptjs';
@@ -198,4 +199,44 @@ test('admin endpoints require admin role', async () => {
 
   const del = await api('DELETE', '/api/admin/units/99', { token: login.data.token });
   assert.equal(del.status, 200);
+});
+
+test('admin can list all users with scores and delete a user', async () => {
+  const passwordHash = await bcrypt.hash('adminpass', 4);
+  await prisma.user.create({
+    data: { username: 'boss', passwordHash, isAdmin: true },
+  });
+  const login = await api('POST', '/api/auth/login', {
+    body: { username: 'boss', password: 'adminpass' },
+  });
+  assert.equal(login.status, 200);
+
+  const { data: player } = await register('player1');
+  await api('PUT', '/api/me/progress/1', {
+    token: player.token,
+    body: { score: 20 },
+  });
+
+  const users = await api('GET', '/api/admin/users', { token: login.data.token });
+  assert.equal(users.status, 200);
+  assert.ok(users.data.length >= 2);
+
+  const p = users.data.find((u) => u.username === 'player1');
+  assert.ok(p);
+  assert.equal(p.score, 50);
+  assert.equal(p.progress[0].bestScore, 20);
+
+  const self = users.data.find((u) => u.username === 'boss');
+  const selfDel = await api('DELETE', `/api/admin/users/${self.id}`, {
+    token: login.data.token,
+  });
+  assert.equal(selfDel.status, 400);
+
+  const del = await api('DELETE', `/api/admin/users/${p.id}`, {
+    token: login.data.token,
+  });
+  assert.equal(del.status, 200);
+
+  const after = await api('GET', '/api/admin/users', { token: login.data.token });
+  assert.equal(after.data.find((u) => u.username === 'player1'), undefined);
 });

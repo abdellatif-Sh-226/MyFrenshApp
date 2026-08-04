@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../core/theme/app_theme.dart';
 import '../models/quiz_result_model.dart';
 import '../models/unit_model.dart';
+import '../providers/auth_provider.dart';
 import '../widgets/result_animation.dart';
 import 'quiz_screen.dart';
 
@@ -214,8 +216,10 @@ class ResultScreen extends StatelessWidget {
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            QuizScreen(unit: unit),
+        pageBuilder: (context, animation, secondaryAnimation) => QuizScreen(
+          unit: unit,
+          adminMode: context.read<AuthProvider>().isAdmin,
+        ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return SlideTransition(
             position: Tween<Offset>(

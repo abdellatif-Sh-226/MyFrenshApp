@@ -23,6 +23,7 @@ class QuizProvider extends ChangeNotifier {
   QuizProvider(this._jsonLoader);
 
   List<Question> get questions => _shuffledQuestions;
+  List<Question> get allQuestions => _allQuestions;
   List<List<String>> get shuffledChoices => _shuffledChoices;
   int get currentIndex => _currentIndex;
   int get score => _score;
@@ -115,6 +116,31 @@ class QuizProvider extends ChangeNotifier {
       _isAnswered = false;
       notifyListeners();
     }
+  }
+
+  void previousQuestion() {
+    if (_currentIndex > 0) {
+      _currentIndex--;
+      _selectedAnswerIndex = null;
+      _isAnswered = false;
+      notifyListeners();
+    }
+  }
+
+  /// Replaces the currently shown question (used by admin editing).
+  void updateCurrentQuestion(Question updated) {
+    if (_currentIndex >= _allQuestions.length) return;
+    final allIndex = _allQuestions.indexOf(currentQuestion);
+    if (allIndex >= 0) {
+      _allQuestions[allIndex] = updated;
+    }
+    _shuffledQuestions[_currentIndex] = updated;
+    if (_currentIndex < _shuffledChoices.length) {
+      _shuffledChoices[_currentIndex] = List.from(updated.choices);
+    }
+    _isAnswered = false;
+    _selectedAnswerIndex = null;
+    notifyListeners();
   }
 
   QuizResult getResult() {

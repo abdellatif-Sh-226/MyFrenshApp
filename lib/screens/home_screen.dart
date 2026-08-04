@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/constants/app_constants.dart';
 import '../core/theme/app_theme.dart';
 import '../models/unit_model.dart';
+import '../providers/auth_provider.dart';
 import '../providers/content_provider.dart';
 import '../providers/progress_provider.dart';
 import '../widgets/unit_card.dart';
@@ -21,8 +22,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<Unit> _units = [];
-  bool _loading = true;
   int _currentTab = 0;
 
   static const List<String> _tabTitles = [
@@ -35,18 +34,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadUnits();
-  }
-
-  Future<void> _loadUnits() async {
-    final contentProvider = context.read<ContentProvider>();
-    if (!contentProvider.loaded) {
-      await contentProvider.loadAll();
-    }
-    if (!mounted) return;
-    setState(() {
-      _units = contentProvider.units;
-      _loading = false;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final contentProvider = context.read<ContentProvider>();
+      if (!contentProvider.loaded) {
+        contentProvider.loadAll();
+      }
     });
   }
 
@@ -125,20 +117,23 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildUnitsTab(BuildContext context, bool isDark) {
-    if (_loading) {
+    final contentProvider = context.watch<ContentProvider>();
+    final units = contentProvider.units;
+
+    if (contentProvider.loading && units.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
     return RefreshIndicator(
-      onRefresh: _loadUnits,
+      onRefresh: contentProvider.loadAll,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(context, isDark),
+          _buildHeader(context, isDark, units.length),
           Expanded(
             child: Consumer<ProgressProvider>(
               builder: (context, progressProvider, child) {
-                final displayUnits = _units.map((unit) {
+                final displayUnits = units.map((unit) {
                   final copy = Unit(
                     unitNumber: unit.unitNumber,
                     difficulty: unit.difficulty,
@@ -169,7 +164,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, bool isDark) {
+  Widget _buildHeader(BuildContext context, bool isDark, int unitCount) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
       child: Column(
@@ -181,7 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            '${_units.length} units · ${AppConstants.questionsPerUnit} questions each',
+            '$unitCount units · ${AppConstants.questionsPerUnit} questions each',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: isDark ? Colors.white60 : Colors.grey.shade600,
                 ),
@@ -193,6 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _startQuiz(Unit unit) {
     final progressProvider = context.read<ProgressProvider>();
+    final isAdmin = context.read<AuthProvider>().isAdmin;
     if (unit.locked && !progressProvider.canOpenUnit(unit.unitNumber)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -204,7 +200,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    if (unit.bestScore >= AppConstants.writingTestUnlockScore) {
+    if (isAdmin || unit.bestScore >= AppConstants.writingTestUnlockScore) {
       _showUnitChoice(unit);
       return;
     }
@@ -277,11 +273,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _pushQuiz(Unit unit) {
+    final isAdmin = context.read<AuthProvider>().isAdmin;
     Navigator.push(
       context,
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
-            QuizScreen(unit: unit),
+            QuizScreen(unit: unit, adminMode: isAdmin),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return SlideTransition(
             position: Tween<Offset>(
@@ -323,7 +320,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openWritingTest(Unit unit) {
-    if (unit.bestScore < AppConstants.writingTestUnlockScore) {
+    final isAdmin = context.read<AuthProvider>().isAdmin;
+    if (!isAdmin && unit.bestScore < AppConstants.writingTestUnlockScore) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

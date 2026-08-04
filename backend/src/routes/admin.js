@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../db.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
+import { computeUserScore } from '../score.js';
 
 const router = Router();
 router.use(requireAuth, requireAdmin);
@@ -106,6 +107,41 @@ router.delete('/courses/:id', async (req, res) => {
   const existing = await prisma.course.findUnique({ where: { id: Number(req.params.id) } });
   if (!existing) return res.status(404).json({ error: 'Course not found' });
   await prisma.course.delete({ where: { id: existing.id } });
+  res.json({ ok: true });
+});
+
+// ---------- Users ----------
+router.get('/users', async (req, res) => {
+  const users = await prisma.user.findMany({ include: { progress: true } });
+  res.json(
+    users.map((u) => {
+      const score = computeUserScore(u.progress);
+      return {
+        id: u.id,
+        username: u.username,
+        isAdmin: u.isAdmin,
+        createdAt: u.createdAt,
+        score: score.total,
+        quizTotal: score.quizTotal,
+        writingTotal: score.writingTotal,
+        progress: u.progress.map((p) => ({
+          unitNumber: p.unitNumber,
+          bestScore: p.bestScore,
+          writingBestScore: p.writingBestScore,
+        })),
+      };
+    }),
+  );
+});
+
+router.delete('/users/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (id === req.user.id) {
+    return res.status(400).json({ error: 'You cannot delete your own account' });
+  }
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  await prisma.user.delete({ where: { id } });
   res.json({ ok: true });
 });
 

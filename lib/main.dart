@@ -18,6 +18,7 @@ import 'screens/about_screen.dart';
 import 'screens/story_screen.dart';
 import 'screens/alphabet_screen.dart';
 import 'screens/mistakes_screen.dart';
+import 'screens/admin_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +35,7 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
+        Provider<ApiService>.value(value: api),
         ChangeNotifierProvider(
           create: (_) => ThemeProvider(progressService)..loadTheme(),
         ),
@@ -79,6 +81,7 @@ class FrenchVocabularyApp extends StatelessWidget {
             '/alphabet': (context) => const AlphabetScreen(),
             '/mistakes': (context) => const MistakesScreen(),
             '/friends': (context) => const FriendsScreen(),
+            '/admin': (context) => const AdminScreen(),
           },
         );
       },

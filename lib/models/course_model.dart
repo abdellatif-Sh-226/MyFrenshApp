@@ -1,6 +1,7 @@
 import 'question_model.dart';
 
 class Course {
+  final int? id;
   final String title;
   final String description;
   final String iconKey;
@@ -8,6 +9,7 @@ class Course {
   final List<Question> questions;
 
   const Course({
+    this.id,
     required this.title,
     required this.description,
     required this.iconKey,
@@ -17,6 +19,7 @@ class Course {
 
   factory Course.fromJson(Map<String, dynamic> json) {
     return Course(
+      id: (json['id'] as num?)?.toInt(),
       title: json['title'] as String? ?? '',
       description: json['description'] as String? ?? '',
       iconKey: json['iconKey'] as String? ?? '',
@@ -27,6 +30,16 @@ class Course {
           .map((e) => Question.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'description': description,
+      'iconKey': iconKey,
+      'lessons': lessons.map((l) => l.toJson()).toList(),
+      'questions': questions.map((q) => q.toJson()).toList(),
+    };
   }
 }
 
@@ -41,5 +54,9 @@ class CourseLesson {
       title: json['title'] as String? ?? '',
       content: json['content'] as String? ?? '',
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'title': title, 'content': content};
   }
 }

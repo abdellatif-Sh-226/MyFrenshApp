@@ -3,20 +3,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:provider/provider.dart';
 import '../models/mistake_model.dart';
+import '../models/question_model.dart';
 import '../models/unit_model.dart';
 import '../core/theme/app_theme.dart';
+import '../providers/content_provider.dart';
 import '../providers/quiz_provider.dart';
 import '../providers/progress_provider.dart';
 import '../widgets/question_card.dart';
 import '../widgets/answer_button.dart';
 import '../widgets/progress_bar_widget.dart';
+import '../widgets/question_edit_dialog.dart';
 import 'lesson_screen.dart';
 import 'result_screen.dart';
 
 class QuizScreen extends StatefulWidget {
   final Unit unit;
+  final bool adminMode;
 
-  const QuizScreen({super.key, required this.unit});
+  const QuizScreen({super.key, required this.unit, this.adminMode = false});
 
   @override
   State<QuizScreen> createState() => _QuizScreenState();
@@ -102,6 +106,25 @@ class _QuizScreenState extends State<QuizScreen> {
               onPressed: () => _showExitDialog(context),
             ),
             actions: [
+              if (widget.adminMode) ...[
+                IconButton(
+                  icon: const Icon(Icons.skip_previous),
+                  tooltip: 'Previous question',
+                  onPressed: quiz.currentIndex > 0
+                      ? () => quiz.previousQuestion()
+                      : null,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.skip_next),
+                  tooltip: 'Skip question',
+                  onPressed: () => _adminSkip(quiz),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  tooltip: 'Edit answer',
+                  onPressed: () => _adminEdit(quiz),
+                ),
+              ],
               IconButton(
                 icon: const Icon(Icons.school_outlined),
                 tooltip: 'Word lesson',
@@ -258,6 +281,52 @@ class _QuizScreenState extends State<QuizScreen> {
         quiz.nextQuestion();
       }
     });
+  }
+
+  void _adminSkip(QuizProvider quiz) {
+    _answerTimer?.cancel();
+    if (quiz.isLastQuestion) {
+      _finishQuiz(quiz);
+    } else {
+      quiz.nextQuestion();
+    }
+  }
+
+  Future<void> _adminEdit(QuizProvider quiz) async {
+    final updated = await showDialog<Question>(
+      context: context,
+      builder: (_) => QuestionEditDialog(initial: quiz.currentQuestion),
+    );
+    if (updated == null || !mounted) return;
+
+    try {
+      final index = quiz.allQuestions.indexOf(quiz.currentQuestion);
+      if (index >= 0) {
+        final newList = List<Question>.from(quiz.allQuestions);
+        newList[index] = updated;
+        await context
+            .read<ContentProvider>()
+            .adminUpdateUnitQuestions(widget.unit.unitNumber, newList);
+      }
+      quiz.updateCurrentQuestion(updated);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Answer saved'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not save: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _finishQuiz(QuizProvider quiz) async {

@@ -67,6 +67,7 @@ class ProgressProvider extends ChangeNotifier {
   }
 
   bool canOpenUnit(int unitNumber) {
+    if (_api?.isAdmin == true) return true;
     if (unitNumber == 1) return true;
     return getBestScore(unitNumber - 1) >= AppConstants.passThreshold;
   }
