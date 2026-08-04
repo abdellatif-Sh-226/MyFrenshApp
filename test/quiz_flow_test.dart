@@ -56,7 +56,11 @@ void main() {
     final questions = await FakeJsonLoader().loadUnitQuestions(1);
     final unit = Unit(
       unitNumber: 1,
+      title: 'Les Couleurs',
+      category: UnitCategory.noms,
       difficulty: 'Beginner',
+      order: 1,
+      prerequisites: const [],
       questions: questions,
     );
 

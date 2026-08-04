@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../core/constants/app_constants.dart';
 import '../core/theme/app_theme.dart';
 import '../models/quiz_result_model.dart';
 import '../models/unit_model.dart';
@@ -12,6 +13,12 @@ class ResultScreen extends StatelessWidget {
   final Unit? unit;
 
   const ResultScreen({super.key, required this.result, this.unit});
+
+  int get pointsEarned {
+    final u = unit;
+    if (u == null) return 0;
+    return AppConstants.pointsForUnit(u.category.name, result.score);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,27 +117,34 @@ class ResultScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _buildStatItem(
+        Expanded(child: _buildStatItem(
           context,
           icon: Icons.check_circle,
           label: 'Correct',
           value: '${result.score}',
           color: AppTheme.correctGreen,
-        ),
-        _buildStatItem(
+        )),
+        Expanded(child: _buildStatItem(
           context,
           icon: Icons.cancel,
           label: 'Wrong',
           value: '${result.totalQuestions - result.score}',
           color: AppTheme.wrongRed,
-        ),
-        _buildStatItem(
+        )),
+        Expanded(child: _buildStatItem(
           context,
           icon: Icons.quiz_outlined,
           label: 'Total',
           value: '${result.totalQuestions}',
           color: AppTheme.primaryColor,
-        ),
+        )),
+        Expanded(child: _buildStatItem(
+          context,
+          icon: Icons.stars,
+          label: 'Points',
+          value: '$pointsEarned',
+          color: AppTheme.accentColor,
+        )),
       ],
     );
   }
@@ -144,18 +158,20 @@ class ResultScreen extends StatelessWidget {
   }) {
     return Column(
       children: [
-        Icon(icon, color: color, size: 28),
-        const SizedBox(height: 8),
+        Icon(icon, color: color, size: 26),
+        const SizedBox(height: 6),
         Text(
           value,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
         ),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Colors.grey,
               ),
         ),

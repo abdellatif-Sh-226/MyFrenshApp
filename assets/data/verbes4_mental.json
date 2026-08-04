@@ -1,0 +1,22 @@
+[
+  { "word": "penser", "choices": ["يفكر", "يأكل", "ينام", "يجري"], "answer": "يفكر" },
+  { "word": "croire", "choices": ["يعتقد", "يعرف", "يفهم", "يتعلم"], "answer": "يعتقد" },
+  { "word": "savoir", "choices": ["يعرف", "يتعلم", "يفكر", "يحلم"], "answer": "يعرف" },
+  { "word": "comprendre", "choices": ["يشرح", "يفهم", "يتعلم", "يستمع"], "answer": "يفهم" },
+  { "word": "apprendre", "choices": ["يعلّم", "يتعلم", "يفهم", "يقرأ"], "answer": "يتعلم" },
+  { "word": "expliquer", "choices": ["يفهم", "يشرح", "يسأل", "يجيب"], "answer": "يشرح" },
+  { "word": "imaginer", "choices": ["يتخيل", "يتذكر", "ينسى", "يسمع"], "answer": "يتخيل" },
+  { "word": "rêver", "choices": ["يستيقظ", "يحلم", "ينام", "يتذكر"], "answer": "يحلم" },
+  { "word": "décider", "choices": ["يتردد", "يقرر", "يتساءل", "يطلب"], "answer": "يقرر" },
+  { "word": "choisir", "choices": ["يختار", "يرفض", "يقبل", "يطلب"], "answer": "يختار" },
+  { "word": "préférer", "choices": ["يكره", "يفضل", "يختار", "يقرر"], "answer": "يفضل" },
+  { "word": "hésiter", "choices": ["يقرر", "يتردد", "يندفع", "يقبل"], "answer": "يتردد" },
+  { "word": "se souvenir", "choices": ["ينسى", "يتذكر", "يتخيل", "يحلم"], "answer": "يتذكر" },
+  { "word": "oublier", "choices": ["يتذكر", "ينسى", "يلاحظ", "يعرف"], "answer": "ينسى" },
+  { "word": "remarquer", "choices": ["يلاحظ", "يتجاهل", "ينسى", "يختفي"], "answer": "يلاحظ" },
+  { "word": "observer", "choices": ["يتجاهل", "يراقب", "يفكر", "يسأل"], "answer": "يراقب" },
+  { "word": "comparer", "choices": ["يقارن", "يفضل", "يختار", "يحكم"], "answer": "يقارن" },
+  { "word": "analyser", "choices": ["يحلل", "ينسى", "يتخيل", "يحلم"], "answer": "يحلل" },
+  { "word": "résoudre", "choices": ["يخلق", "يحل", "يكسر", "يصنع"], "answer": "يحل" },
+  { "word": "calculer", "choices": ["يقيس", "يحسب", "يوزع", "يجمع"], "answer": "يحسب" }
+]

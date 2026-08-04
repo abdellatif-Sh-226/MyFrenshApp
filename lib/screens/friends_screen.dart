@@ -200,7 +200,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   Widget _leaderboardRow(BuildContext context, int rank, Map<String, dynamic> row) {
     final score = (row['score'] as num?)?.toInt() ?? 0;
-    final isTop = rank <= 3;
     return ListTile(
       leading: UserAvatar(
         base64Photo: row['profilePhoto'] as String?,

@@ -24,10 +24,14 @@ model User {
 }
 
 model Unit {
-  id         Int    @id @default(autoincrement())
-  unitNumber Int    @unique
-  difficulty String
-  questions  Json
+  id            Int    @id @default(autoincrement())
+  unitNumber    Int    @unique
+  title         String @default("")
+  category      String @default("noms")
+  difficulty    String
+  order         Int    @default(1)
+  prerequisites Json?
+  questions     Json
 }
 
 model Story {

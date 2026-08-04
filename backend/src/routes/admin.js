@@ -8,14 +8,24 @@ router.use(requireAuth, requireAdmin);
 
 // ---------- Units ----------
 router.post('/units', async (req, res) => {
-  const { unitNumber, difficulty, questions } = req.body || {};
+  const { unitNumber, title, category, difficulty, order, prerequisites, questions } = req.body || {};
   if (!unitNumber || !difficulty || !Array.isArray(questions) || questions.length === 0) {
     return res.status(400).json({ error: 'unitNumber, difficulty and questions are required' });
   }
   const num = Number(unitNumber);
   const existing = await prisma.unit.findUnique({ where: { unitNumber: num } });
   if (existing) return res.status(409).json({ error: 'Unit already exists' });
-  const unit = await prisma.unit.create({ data: { unitNumber: num, difficulty, questions } });
+  const unit = await prisma.unit.create({
+    data: {
+      unitNumber: num,
+      title: title || '',
+      category: category || 'noms',
+      difficulty,
+      order: order || 1,
+      prerequisites: prerequisites ?? null,
+      questions,
+    },
+  });
   res.status(201).json(unit);
 });
 
@@ -23,11 +33,15 @@ router.put('/units/:unitNumber', async (req, res) => {
   const num = Number(req.params.unitNumber);
   const existing = await prisma.unit.findUnique({ where: { unitNumber: num } });
   if (!existing) return res.status(404).json({ error: 'Unit not found' });
-  const { difficulty, questions } = req.body || {};
+  const { title, category, difficulty, order, prerequisites, questions } = req.body || {};
   const unit = await prisma.unit.update({
     where: { id: existing.id },
     data: {
+      title: title ?? existing.title,
+      category: category ?? existing.category,
       difficulty: difficulty ?? existing.difficulty,
+      order: order ?? existing.order,
+      prerequisites: prerequisites === undefined ? existing.prerequisites : prerequisites,
       questions: questions ?? existing.questions,
     },
   });

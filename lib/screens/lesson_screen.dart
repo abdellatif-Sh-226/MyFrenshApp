@@ -38,7 +38,7 @@ class _LessonScreenState extends State<LessonScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => SpellingScreen(
-          title: 'Unit ${widget.unit.unitNumber} · Writing Practice',
+          title: '${widget.unit.displayTitle} · Writing Practice',
           questions: widget.unit.questions,
           mode: SpellingMode.practice,
           unitNumber: widget.unit.unitNumber,
@@ -57,7 +57,7 @@ class _LessonScreenState extends State<LessonScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Unit ${widget.unit.unitNumber} · Lesson'),
+        title: Text(widget.unit.displayTitle),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

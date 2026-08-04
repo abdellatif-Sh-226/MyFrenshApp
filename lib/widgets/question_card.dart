@@ -6,6 +6,7 @@ class QuestionCard extends StatelessWidget {
   final String? prompt;
   final String word;
   final VoidCallback? onSpeak;
+  final double wordFontSize;
 
   const QuestionCard({
     super.key,
@@ -13,6 +14,7 @@ class QuestionCard extends StatelessWidget {
     this.prompt,
     required this.word,
     this.onSpeak,
+    this.wordFontSize = 32,
   });
 
   @override
@@ -78,9 +80,9 @@ class QuestionCard extends StatelessWidget {
                     child: Text(
                       word,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
-                        fontSize: 32,
+                        fontSize: wordFontSize,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1,
                       ),

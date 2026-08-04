@@ -6,17 +6,23 @@ import { seedStories, seedCourses } from './data/seedContent.js';
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 
-const UNIT_DIFFICULTIES = [
-  'Beginner',
-  'Beginner',
-  'Elementary',
-  'Elementary',
-  'Intermediate',
-  'Intermediate',
-  'Upper Intermediate',
-  'Advanced',
-  'Advanced',
-  'Expert',
+// Unit definitions: 1-5 Noms, 6-10 Verbes, 11-15 Phrases
+const UNIT_DEFS = [
+  { file: 'noms1_colors',   category: 'noms',    title: 'Les Couleurs',       difficulty: 'Beginner', order: 1, prerequisites: null },
+  { file: 'noms2_numbers',  category: 'noms',    title: 'Les Nombres',        difficulty: 'Beginner', order: 2, prerequisites: null },
+  { file: 'noms3_animals',  category: 'noms',    title: 'Les Animaux',        difficulty: 'Elementary', order: 3, prerequisites: null },
+  { file: 'noms4_food',     category: 'noms',    title: 'La Nourriture',      difficulty: 'Elementary', order: 4, prerequisites: null },
+  { file: 'noms5_family',   category: 'noms',    title: 'La Famille',         difficulty: 'Intermediate', order: 5, prerequisites: null },
+  { file: 'verbes1_physical', category: 'verbes', title: 'Les Actions Physiques', difficulty: 'Elementary', order: 1, prerequisites: null },
+  { file: 'verbes2_daily',  category: 'verbes',  title: 'Les Verbes du Quotidien', difficulty: 'Elementary', order: 2, prerequisites: null },
+  { file: 'verbes3_movement', category: 'verbes', title: 'Le Mouvement',      difficulty: 'Intermediate', order: 3, prerequisites: null },
+  { file: 'verbes4_mental', category: 'verbes',  title: 'Les Verbes Mentaux', difficulty: 'Upper Intermediate', order: 4, prerequisites: null },
+  { file: 'verbes5_emotions', category: 'verbes', title: 'Les Émotions',      difficulty: 'Advanced', order: 5, prerequisites: null },
+  { file: 'phrases1_simple',   category: 'phrases', title: 'Phrases Simples',      difficulty: 'Elementary', order: 1, prerequisites: [2, 7] },
+  { file: 'phrases2_daily',    category: 'phrases', title: 'Phrases du Quotidien', difficulty: 'Intermediate', order: 2, prerequisites: [3, 8] },
+  { file: 'phrases3_advanced', category: 'phrases', title: 'Phrases Avancées',     difficulty: 'Upper Intermediate', order: 3, prerequisites: [4, 9] },
+  { file: 'phrases4_social',   category: 'phrases', title: 'Phrases Sociales',     difficulty: 'Advanced', order: 4, prerequisites: [5, 10] },
+  { file: 'phrases5_expert',   category: 'phrases', title: 'Phrases Expertes',     difficulty: 'Expert', order: 5, prerequisites: [5, 10] },
 ];
 
 async function seedAdmin() {
@@ -32,17 +38,25 @@ async function seedAdmin() {
 }
 
 async function seedUnits() {
-  for (let i = 1; i <= 10; i++) {
-    const url = new URL(`../../assets/data/unit${i}.json`, import.meta.url);
+  for (let i = 1; i <= UNIT_DEFS.length; i++) {
+    const def = UNIT_DEFS[i - 1];
+    const url = new URL(`../../assets/data/${def.file}.json`, import.meta.url);
     const questions = JSON.parse(readFileSync(url, 'utf8'));
-    const difficulty = UNIT_DIFFICULTIES[i - 1];
+    const data = {
+      title: def.title,
+      category: def.category,
+      difficulty: def.difficulty,
+      order: def.order,
+      prerequisites: def.prerequisites,
+      questions,
+    };
     await prisma.unit.upsert({
       where: { unitNumber: i },
-      update: { difficulty, questions },
-      create: { unitNumber: i, difficulty, questions },
+      update: data,
+      create: { unitNumber: i, ...data },
     });
   }
-  console.log('Units seeded (10)');
+  console.log(`Units seeded (${UNIT_DEFS.length})`);
 }
 
 async function seedStoriesIntoDb() {

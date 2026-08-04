@@ -64,11 +64,26 @@ class ContentProvider extends ChangeNotifier {
       final questions = await loadLocalUnitQuestions(i);
       units.add(Unit(
         unitNumber: i,
+        title: AppConstants.unitTitles[i - 1],
+        category: UnitCategory.fromString(AppConstants.unitCategories[i - 1]),
         difficulty: AppConstants.unitDifficulties[i - 1],
+        order: ((i - 1) % AppConstants.unitsPerCategory) + 1,
+        prerequisites: AppConstants.unitPrerequisites[i - 1] ?? const [],
         questions: questions,
       ));
     }
     return units;
+  }
+
+  /// Units grouped by category, sorted by unitNumber.
+  Map<UnitCategory, List<Unit>> get unitsByCategory {
+    final sorted = List<Unit>.from(_units)
+      ..sort((a, b) => a.unitNumber.compareTo(b.unitNumber));
+    final map = <UnitCategory, List<Unit>>{};
+    for (final category in UnitCategory.values) {
+      map[category] = sorted.where((u) => u.category == category).toList();
+    }
+    return map;
   }
 
   Future<List<Story>> _loadStories() async {

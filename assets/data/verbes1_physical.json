@@ -1,0 +1,22 @@
+[
+  { "word": "marcher", "choices": ["يمشي", "يجري", "يقفز", "يركض"], "answer": "يمشي" },
+  { "word": "courir", "choices": ["يمشي", "يجري", "يسبح", "يقفز"], "answer": "يجري" },
+  { "word": "nager", "choices": ["يسبح", "يطير", "يقفز", "يجري"], "answer": "يسبح" },
+  { "word": "danser", "choices": ["يغني", "يرقص", "يضحك", "يمشي"], "answer": "يرقص" },
+  { "word": "chanter", "choices": ["يرقص", "يغني", "يتكلم", "يصرخ"], "answer": "يغني" },
+  { "word": "jouer", "choices": ["يلعب", "يعمل", "ينام", "يأكل"], "answer": "يلعب" },
+  { "word": "cuisiner", "choices": ["يأكل", "يطبخ", "يغسل", "يشرب"], "answer": "يطبخ" },
+  { "word": "laver", "choices": ["ينظف", "يغسل", "يكوي", "يجفف"], "answer": "يغسل" },
+  { "word": "ouvrir", "choices": ["يفتح", "يغلق", "يدفع", "يسحب"], "answer": "يفتح" },
+  { "word": "fermer", "choices": ["يفتح", "يغلق", "يكسر", "يصلح"], "answer": "يغلق" },
+  { "word": "porter", "choices": ["يحمل", "يرمي", "يسحب", "يدفع"], "answer": "يحمل" },
+  { "word": "pousser", "choices": ["يسحب", "يدفع", "يرفع", "يخفض"], "answer": "يدفع" },
+  { "word": "tirer", "choices": ["يدفع", "يسحب", "يرمي", "يقطف"], "answer": "يسحب" },
+  { "word": "jeter", "choices": ["يرمي", "يمسك", "يلتقط", "يرفع"], "answer": "يرمي" },
+  { "word": "attraper", "choices": ["يرمي", "يمسك", "يسقط", "يضيع"], "answer": "يمسك" },
+  { "word": "frapper", "choices": ["يضرب", "يمسك", "يدفع", "يرمي"], "answer": "يضرب" },
+  { "word": "tourner", "choices": ["يستدير", "يقف", "يجلس", "ينام"], "answer": "يستدير" },
+  { "word": "ramasser", "choices": ["يرمي", "يلتقط", "يكسر", "يرمي بعيدا"], "answer": "يلتقط" },
+  { "word": "couper", "choices": ["يقطع", "يلصق", "يثني", "يلف"], "answer": "يقطع" },
+  { "word": "mélanger", "choices": ["يفصل", "يخلط", "يرتب", "ينظف"], "answer": "يخلط" }
+]

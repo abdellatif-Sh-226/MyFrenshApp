@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../core/constants/app_constants.dart';
 import '../core/theme/app_theme.dart';
 import '../models/unit_model.dart';
-import '../providers/auth_provider.dart';
 import '../providers/content_provider.dart';
 import '../providers/progress_provider.dart';
-import '../widgets/unit_card.dart';
 import 'alphabet_screen.dart';
+import 'category_list_screen.dart';
 import 'courses_screen.dart';
-import 'lesson_screen.dart';
-import 'quiz_screen.dart';
-import 'spelling_screen.dart';
 import 'story_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -22,15 +17,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentTab = 0;
-
-  static const List<String> _tabTitles = [
-    'Units',
-    'Courses',
-    'Stories',
-    'Alphabet',
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -48,25 +34,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          _tabTitles[_currentTab],
-          style: const TextStyle(fontWeight: FontWeight.bold),
+        title: const Text(
+          'French Vocabulary Master',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
-          Consumer<ProgressProvider>(
-            builder: (context, progress, child) {
-              final count = progress.mistakes.length;
-              return IconButton(
-                tooltip: 'My Mistakes',
-                onPressed: () => Navigator.pushNamed(context, '/mistakes'),
-                icon: Badge(
-                  isLabelVisible: count > 0,
-                  label: Text('$count'),
-                  child: const Icon(Icons.error_outline),
-                ),
-              );
-            },
-          ),
           IconButton(
             icon: const Icon(Icons.group_outlined),
             tooltip: 'Friends',
@@ -78,268 +50,267 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: IndexedStack(
-        index: _currentTab,
-        children: [
-          _buildUnitsTab(context, isDark),
-          const CoursesScreen(),
-          const StoryListView(),
-          const AlphabetGridView(),
-        ],
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentTab,
-        onDestinationSelected: (index) => setState(() => _currentTab = index),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.menu_book_outlined),
-            selectedIcon: Icon(Icons.menu_book),
-            label: 'Units',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.school_outlined),
-            selectedIcon: Icon(Icons.school),
-            label: 'Courses',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.auto_stories_outlined),
-            selectedIcon: Icon(Icons.auto_stories),
-            label: 'Stories',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.abc_outlined),
-            selectedIcon: Icon(Icons.abc),
-            label: 'Alphabet',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUnitsTab(BuildContext context, bool isDark) {
-    final contentProvider = context.watch<ContentProvider>();
-    final units = contentProvider.units;
-
-    if (contentProvider.loading && units.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    return RefreshIndicator(
-      onRefresh: contentProvider.loadAll,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader(context, isDark, units.length),
-          Expanded(
-            child: Consumer<ProgressProvider>(
-              builder: (context, progressProvider, child) {
-                final displayUnits = units.map((unit) {
-                  final copy = Unit(
-                    unitNumber: unit.unitNumber,
-                    difficulty: unit.difficulty,
-                    questions: unit.questions,
-                  );
-                  progressProvider.applyScoreToUnit(copy);
-                  return copy;
-                }).toList();
-                return ListView.builder(
-                  padding: const EdgeInsets.only(top: 8, bottom: 24),
-                  itemCount: displayUnits.length,
-                  itemBuilder: (context, index) {
-                    final unit = displayUnits[index];
-                    return UnitCard(
-                      unit: unit,
-                      onTap: () => _startQuiz(unit),
-                      onStudy: () => _openLesson(unit),
-                      onWrite: () => _openWritingPractice(unit),
-                      writeLocked: false,
-                    );
-                  },
-                );
-              },
+      body: RefreshIndicator(
+        onRefresh: () => context.read<ContentProvider>().loadAll(),
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Text(
+              'Welcome!',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, bool isDark, int unitCount) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Choose a Unit',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '$unitCount units · ${AppConstants.questionsPerUnit} questions each',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: isDark ? Colors.white60 : Colors.grey.shade600,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _startQuiz(Unit unit) {
-    final progressProvider = context.read<ProgressProvider>();
-    final isAdmin = context.read<AuthProvider>().isAdmin;
-    if (unit.locked && !progressProvider.canOpenUnit(unit.unitNumber)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'You need to score ${AppConstants.passThreshold} in unit ${unit.unitNumber - 1} to unlock this unit.',
-          ),
-        ),
-      );
-      return;
-    }
-
-    if (isAdmin || unit.bestScore >= AppConstants.writingTestUnlockScore) {
-      _showUnitChoice(unit);
-      return;
-    }
-
-    _pushQuiz(unit);
-  }
-
-  void _showUnitChoice(Unit unit) {
-    showModalBottomSheet<void>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            const SizedBox(height: 4),
+            Text(
+              'What would you like to do today?',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: isDark ? Colors.white60 : Colors.grey.shade600,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            _buildLessonsSummary(context),
+            const SizedBox(height: 24),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1.1,
               children: [
-                Text(
-                  'Unit ${unit.unitNumber}',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Choose a test',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  height: 52,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _pushQuiz(unit);
-                    },
-                    icon: const Icon(Icons.quiz_outlined),
-                    label: const Text('Normal Quiz'),
+                _DashboardCard(
+                  icon: Icons.menu_book_outlined,
+                  label: 'Lessons',
+                  subtitle: 'Noms · Verbes · Phrases',
+                  color: AppTheme.primaryColor,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CategoryListScreen(),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 52,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _openWritingTest(unit);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.accentColor,
+                _DashboardCard(
+                  icon: Icons.school_outlined,
+                  label: 'Courses',
+                  subtitle: 'Grammar lessons',
+                  color: AppTheme.accentColor,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CoursesScreen(),
                     ),
-                    icon: const Icon(Icons.edit_note),
-                    label: const Text('Writing Test (harder)'),
+                  ),
+                ),
+                _DashboardCard(
+                  icon: Icons.auto_stories_outlined,
+                  label: 'Stories',
+                  subtitle: 'Read in French',
+                  color: AppTheme.correctGreen,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const StoryListView(),
+                    ),
+                  ),
+                ),
+                _DashboardCard(
+                  icon: Icons.abc_outlined,
+                  label: 'Alphabet',
+                  subtitle: 'Letters & sounds',
+                  color: Colors.deepPurple,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const AlphabetGridView(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLessonsSummary(BuildContext context) {
+    final content = context.watch<ContentProvider>();
+    final progress = context.watch<ProgressProvider>();
+    final byCategory = content.unitsByCategory;
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Your Progress',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            for (final category in UnitCategory.values)
+              _buildCategoryProgress(
+                context,
+                category,
+                byCategory[category] ?? const [],
+                progress,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryProgress(
+    BuildContext context,
+    UnitCategory category,
+    List<Unit> units,
+    ProgressProvider progress,
+  ) {
+    var completed = 0;
+    for (final unit in units) {
+      final copy = _copyUnit(unit);
+      progress.applyScoreToUnit(copy, context.read<ContentProvider>().units);
+      if (copy.completed) completed++;
+    }
+
+    final color = _categoryColor(category);
+    final percent = units.isEmpty ? 0.0 : completed / units.length;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Icon(category.icon, color: color, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        category.label,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    Text(
+                      '$completed/${units.length}',
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white60
+                            : Colors.grey.shade600,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: percent,
+                    minHeight: 8,
+                    backgroundColor: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white12
+                        : Colors.grey.shade200,
+                    color: color,
                   ),
                 ),
               ],
             ),
           ),
-        );
-      },
-    );
-  }
-
-  void _pushQuiz(Unit unit) {
-    final isAdmin = context.read<AuthProvider>().isAdmin;
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            QuizScreen(unit: unit, adminMode: isAdmin),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(1, 0),
-              end: Offset.zero,
-            ).animate(CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeInOutCubic,
-            )),
-            child: child,
-          );
-        },
-        transitionDuration: const Duration(milliseconds: 400),
+        ],
       ),
     );
   }
 
-  void _openLesson(Unit unit) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => LessonScreen(unit: unit),
-      ),
+  Unit _copyUnit(Unit unit) {
+    return Unit(
+      unitNumber: unit.unitNumber,
+      title: unit.title,
+      category: unit.category,
+      difficulty: unit.difficulty,
+      order: unit.order,
+      prerequisites: unit.prerequisites,
+      questions: unit.questions,
     );
   }
 
-  void _openWritingPractice(Unit unit) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => SpellingScreen(
-          title: 'Unit ${unit.unitNumber} · Writing Practice',
-          questions: unit.questions,
-          mode: SpellingMode.practice,
-          unitNumber: unit.unitNumber,
-        ),
-      ),
-    );
-  }
-
-  void _openWritingTest(Unit unit) {
-    final isAdmin = context.read<AuthProvider>().isAdmin;
-    if (!isAdmin && unit.bestScore < AppConstants.writingTestUnlockScore) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Score ${AppConstants.writingTestUnlockScore}/${AppConstants.questionsPerUnit} in unit ${unit.unitNumber} to unlock the writing test.',
-          ),
-        ),
-      );
-      return;
+  Color _categoryColor(UnitCategory category) {
+    switch (category) {
+      case UnitCategory.noms:
+        return Colors.blue;
+      case UnitCategory.verbes:
+        return AppTheme.correctGreen;
+      case UnitCategory.phrases:
+        return AppTheme.accentColor;
     }
+  }
+}
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => SpellingScreen(
-          title: 'Unit ${unit.unitNumber} · Writing Test',
-          questions: unit.questions,
-          mode: SpellingMode.test,
-          unitNumber: unit.unitNumber,
+class _DashboardCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _DashboardCard({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              const Spacer(),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey,
+                    ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -11,7 +11,7 @@ import 'package:french_vocabulary_master/services/progress_service.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('home lists all 10 units from bundled content when offline', (tester) async {
+  testWidgets('home dashboard lists categories and lesson entry points', (tester) async {
     SharedPreferences.setMockInitialValues({});
 
     final api = ApiService();
@@ -39,6 +39,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('10 units · 20 questions each'), findsOneWidget);
+    expect(find.text('Lessons'), findsOneWidget);
+    expect(find.text('Les Noms'), findsOneWidget);
+    expect(find.text('Les Verbes'), findsOneWidget);
+    expect(find.text('Les Phrases'), findsOneWidget);
   });
 }

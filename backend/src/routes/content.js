@@ -10,7 +10,11 @@ router.get('/units', async (req, res) => {
   res.json(
     units.map((u) => ({
       unitNumber: u.unitNumber,
+      title: u.title,
+      category: u.category,
       difficulty: u.difficulty,
+      order: u.order,
+      prerequisites: u.prerequisites,
       questions: u.questions,
     })),
   );

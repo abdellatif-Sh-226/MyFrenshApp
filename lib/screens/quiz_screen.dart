@@ -91,7 +91,7 @@ class _QuizScreenState extends State<QuizScreen> {
       builder: (context, quiz, child) {
         if (quiz.isLoading || quiz.questions.isEmpty) {
           return Scaffold(
-            appBar: AppBar(title: Text('Unit ${widget.unit.unitNumber}')),
+            appBar: AppBar(title: Text(widget.unit.displayTitle)),
             body: const Center(child: CircularProgressIndicator()),
           );
         }
@@ -100,7 +100,7 @@ class _QuizScreenState extends State<QuizScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text('Unit ${widget.unit.unitNumber}'),
+            title: Text(widget.unit.displayTitle),
             leading: IconButton(
               icon: const Icon(Icons.close),
               onPressed: () => _showExitDialog(context),
@@ -166,6 +166,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   prompt: _promptFor(quiz.currentQuestion.word),
                   word: quiz.currentQuestion.word,
                   onSpeak: () => _speakWord(quiz.currentQuestion.word),
+                  wordFontSize: widget.unit.isPhrase ? 22 : 32,
                 ),
                 const SizedBox(height: 16),
                 Expanded(

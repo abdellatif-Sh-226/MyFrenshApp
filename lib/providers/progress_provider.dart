@@ -66,10 +66,29 @@ class ProgressProvider extends ChangeNotifier {
     return _writingScores[unitNumber] ?? 0;
   }
 
-  bool canOpenUnit(int unitNumber) {
+  /// Whether a lesson is unlocked. First lesson of each category is always open;
+  /// the next lesson in the same category opens once the previous one reaches
+  /// [AppConstants.unlockScore]. Admins always bypass this.
+  bool canOpenUnit(Unit unit, List<Unit> allUnits) {
     if (_api?.isAdmin == true) return true;
-    if (unitNumber == 1) return true;
-    return getBestScore(unitNumber - 1) >= AppConstants.passThreshold;
+    if (unit.order <= 1) return true;
+    final categoryUnits = allUnits
+        .where((u) => u.category == unit.category)
+        .toList()
+      ..sort((a, b) => a.order.compareTo(b.order));
+    final index =
+        categoryUnits.indexWhere((u) => u.unitNumber == unit.unitNumber);
+    if (index <= 0) return true;
+    final previous = categoryUnits[index - 1];
+    return getBestScore(previous.unitNumber) >= AppConstants.unlockScore;
+  }
+
+  /// Whether a phrase lesson's recommended noms + verbes lessons are done.
+  bool arePrerequisitesMet(Unit unit) {
+    for (final prereq in unit.prerequisites) {
+      if (getBestScore(prereq) < AppConstants.unlockScore) return false;
+    }
+    return true;
   }
 
   Future<void> updateScore(int unitNumber, int score) async {
@@ -141,11 +160,11 @@ class ProgressProvider extends ChangeNotifier {
     }
   }
 
-  void applyScoreToUnit(Unit unit) {
+  void applyScoreToUnit(Unit unit, List<Unit> allUnits) {
     final score = _scores[unit.unitNumber] ?? 0;
     unit.bestScore = score;
     unit.writingBestScore = _writingScores[unit.unitNumber] ?? 0;
     unit.completed = score >= AppConstants.passThreshold;
-    unit.locked = !canOpenUnit(unit.unitNumber);
+    unit.locked = !canOpenUnit(unit, allUnits);
   }
 }
